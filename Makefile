@@ -1,7 +1,7 @@
 NAME = ft_ls
 OBJDIR = build
 DEPDIR = dependancies
-SRC = src/main.c
+SRC = src/main.c src/usrInHandling.c
 SRCEXT = .c
 OBJEXT = .o
 OBJ = $(addprefix $(OBJDIR)/,$(SRC:$(SRCEXT)=$(OBJEXT)))

@@ -6,16 +6,20 @@
 /*   By: hasyxd <aliaudet@student.42lehavre.fr      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 11:11:55 by hasyxd            #+#    #+#             */
-/*   Updated: 2025/04/16 11:15:18 by hasyxd           ###   ########.fr       */
+/*   Updated: 2025/04/16 13:59:46 by hasyxd           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include <libft.h>
+# include <config.h>
 
-int	main(int argc, char **argv)
+int	main(const int argc, const char **argv)
 {
-	(void)argc;
-	(void)argv;
-	ft_fprintf(1, "test\n");
+	bool		flags[FLAG_COUNT] = {false};
+
+	check_args(&flags, argv + 1, argc - 1);
+	for (int i = 0; i < FLAG_COUNT; i++) {
+		if (flags[i])
+			ft_fprintf(1, "%s: is present\n", LONG_FLAGS[i]);
+	}
 	return (0);
 }
