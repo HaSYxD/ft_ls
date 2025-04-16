@@ -1,0 +1,7 @@
+*.o
+*.a
+ft_ls
+.cache/
+dependancies/libft/
+compile_commands.json
+
