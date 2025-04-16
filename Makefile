@@ -48,7 +48,8 @@ fclean: clean
 
 wipe: fclean
 	@if test -d $(DEPDIR)/libft; then\
-		rm -r $(DEPDIR)/libft;\
+		rm -rf $(DEPDIR)/libft;\
+	fi
 	$(RM) $(NAME)
 
 re: fclean all
