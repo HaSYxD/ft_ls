@@ -1,30 +1,31 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   main.c                                             :+:      :+:    :+:   */
+/*   file.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: hasyxd <aliaudet@student.42lehavre.fr      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/04/16 11:11:55 by hasyxd            #+#    #+#             */
-/*   Updated: 2025/04/17 13:16:33 by hasyxd           ###   ########.fr       */
+/*   Created: 2025/04/16 15:30:00 by hasyxd            #+#    #+#             */
+/*   Updated: 2025/04/16 17:04:15 by hasyxd           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include <config.h>
 
-int	main(const int argc, const char **argv)
+void	test_dir(t_list *fileArgs)
 {
-	bool		flags[FLAG_COUNT] = {false};
-	t_garb		gc = init_gc();
-	t_list *	fileArgs = NULL;
+	while (fileArgs) {
+		DIR *	dir = opendir((char *)fileArgs->data);
 
-	fileArgs = check_args(&flags, argv + 1, argc - 1, &gc);
-	if (!fileArgs)
-		return (-1);
-	
-	
-	test_dir(fileArgs);	// TO REMOVE
+		struct dirent *	dirDT = readdir(dir);
 
-	clean_garbage(&gc);
-	return (0);
+		ft_fprintf(1, "%s:\n", (char *)fileArgs->data);
+		while (dirDT) {
+			ft_fprintf(1, "%s ", dirDT->d_name);
+			dirDT = readdir(dir);
+		}
+		ft_fprintf(1, "\n\n");
+		closedir(dir);
+		fileArgs = fileArgs->next;
+	}
 }

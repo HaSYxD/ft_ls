@@ -6,7 +6,7 @@
 /*   By: hasyxd <aliaudet@student.42lehavre.fr      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 13:10:19 by hasyxd            #+#    #+#             */
-/*   Updated: 2025/04/16 14:18:34 by hasyxd           ###   ########.fr       */
+/*   Updated: 2025/04/16 17:02:14 by hasyxd           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,27 +40,45 @@ static int	handle_longFlag(const char *str)
 	return (-1);
 }
 
-int	check_args(bool (*flags)[FLAG_COUNT], const char **args, const size_t count)
+static t_list *	handle_filesArgs(t_list *fileArg, const char *str, t_garb *gc)
 {
-	flagid_t	flagID;
+	DIR *	dir = opendir(str);
+
+	if (!dir) {
+		ft_fprintf(2, "Error: \"%s\" no such file or directory\n", str);
+		return (NULL);
+	}
+
+	ft_lstadd_back(&fileArg, ft_lstnew(gc, (void *)str));
+	closedir(dir);
+	return (fileArg);
+}
+
+t_list *	check_args(bool (*flags)[FLAG_COUNT], const char **args, const size_t count, t_garb *gc)
+{
+	flagid_t	flagID = -2;
+	t_list *	fileArg = NULL;
 
 	for (size_t i = 0; i < count; i++) {
-		if (args[i][0] != '-')
-			return (ft_fprintf(2, "Error: \"%s\" is an invalid argument (not a flag)\n", args[i]), -1);
 
 		size_t	dashCount = ft_strinstcount(args[i], '-');
 
-		if (dashCount == 1)
+		if (args[i][0] != '-')
+			fileArg = handle_filesArgs(fileArg, args[i], gc);
+		
+		if (args[i][0] == '-' && dashCount == 1)
 			flagID = handle_shortFlag(flags, args[i] + 1);
-		else if (dashCount == 2)
+		else if (args[i][0] == '-' && dashCount == 2)
 			flagID = handle_longFlag(args[i] + 2);
 		else if (dashCount > 2)
-			return (ft_fprintf(2, "Error: \"%s\" is an invalid argument (too many dashes)\n", args[i]), -1);
+			return (ft_fprintf(2, "Error: \"%s\" is an invalid argument (too many dashes)\n", args[i]), NULL);
 
 		if (flagID == -1)
-			return (-1);
+			return (NULL);
 		(*flags)[flagID] = true;
 	}
-	return (0);
+	if (!fileArg)
+		fileArg = ft_lstnew(gc, "./");
+	return (fileArg);
 }
 	

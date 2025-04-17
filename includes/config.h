@@ -6,7 +6,7 @@
 /*   By: hasyxd <aliaudet@student.42lehavre.fr      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 13:06:15 by hasyxd            #+#    #+#             */
-/*   Updated: 2025/04/16 14:31:05 by hasyxd           ###   ########.fr       */
+/*   Updated: 2025/04/16 16:54:23 by hasyxd           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,8 @@
 
 # include <unistd.h>
 # include <stdint.h>
+# include <dirent.h>
+# include <sys/stat.h>
 
 # include <libft.h>
 
@@ -40,9 +42,11 @@ typedef struct file_s {
 	size_t		_size;
 	char		_dateTime[9];
 	char *		_name;
-	struct file_s *	next;
+	struct file_s *	_next;
 }	file_t;
 
-int	check_args(bool (*flags)[FLAG_COUNT], const char **args, const size_t count);
+t_list *	check_args(bool (*flags)[FLAG_COUNT], const char **args, const size_t count, t_garb *gc);
+
+void	test_dir(t_list *fileArgs);
 
 #endif
