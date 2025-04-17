@@ -6,7 +6,7 @@
 /*   By: hasyxd <aliaudet@student.42lehavre.fr      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 13:10:19 by hasyxd            #+#    #+#             */
-/*   Updated: 2025/04/16 17:02:14 by hasyxd           ###   ########.fr       */
+/*   Updated: 2025/04/17 17:32:34 by hasyxd           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -81,4 +81,3 @@ t_list *	check_args(bool (*flags)[FLAG_COUNT], const char **args, const size_t c
 		fileArg = ft_lstnew(gc, "./");
 	return (fileArg);
 }
-	
