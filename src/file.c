@@ -6,7 +6,7 @@
 /*   By: hasyxd <aliaudet@student.42lehavre.fr      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 15:30:00 by hasyxd            #+#    #+#             */
-/*   Updated: 2025/04/17 19:19:51 by hasyxd           ###   ########.fr       */
+/*   Updated: 2025/04/22 16:07:48 by hasyxd           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,28 @@ static char *	get_filegrpname(const gid_t gid, t_garb *gc)
 	return (ft_strdup(grp->gr_name, gc));
 }
 
+static char	get_filetype(mode_t mode)
+{
+	switch (mode & S_IFMT) {
+		case S_IFSOCK:
+			return ('s');
+		case S_IFLNK:
+			return ('l');
+		case S_IFREG:
+			return ('-');
+		case S_IFBLK:
+			return ('b');
+		case S_IFDIR:
+			return ('d');
+		case S_IFCHR:
+			return ('c');
+		case S_IFIFO:
+			return ('p');
+		default:
+			return ('?');
+	}
+}
+
 static void	decode_filemode(mode_t mode, char (*buff)[11])
 {
 	uint8_t	ownerMode = (mode >> 0) & 0x07;
@@ -56,7 +78,7 @@ static void	decode_filemode(mode_t mode, char (*buff)[11])
 	for (int i = 0; i < 3; i++)
 		(*buff)[j++] = MODES[otherMode][i];
 	(*buff)[10] = '\0';
-	(*buff)[0] = '-';
+	(*buff)[0] = get_filetype(mode);
 }
 
 static int	get_filecount(const char *path)
@@ -131,16 +153,16 @@ static file_t **	sort_files(file_t **files, const bool time)
 		return (sortname_files(files));
 }
 
-file_t **	getfiles_at(const char *path, t_garb *gc)
+dir_t	getfiles_at(const char *path, t_garb *gc)
 {
 	int	fCount = get_filecount(path);
 	if (fCount == -1)
-		return (NULL);
+		return (NULL_DIR);
 
 	// Open the directory to get the file datas
 	DIR *		dir = opendir(path);
 	if (!dir)
-		return (ft_fprintf(2, "Error: \"%s\" no such file or directory\n", path), NULL);
+		return (ft_fprintf(2, "Error: \"%s\" no such file or directory\n", path), NULL_DIR);
 
 	// Allocate the file tree
 	file_t **	files = allocate(sizeof(file_t *) * (fCount + 1), gc);
@@ -155,7 +177,7 @@ file_t **	getfiles_at(const char *path, t_garb *gc)
 		char *		fullPath = add_pathsuffix(path, dirDT->d_name, gc);
 
 		if (stat(fullPath, &buff) == -1)
-			return (ft_fprintf(2, "Error: \"%s\" could not get file infos\n", path), NULL);
+			return (ft_fprintf(2, "Error: \"%s\" could not get file infos\n", path), NULL_DIR);
 		
 		files[i]->_UUID = buff.st_ino;
 		files[i]->_linksCount = buff.st_nlink;
@@ -174,28 +196,6 @@ file_t **	getfiles_at(const char *path, t_garb *gc)
 	files = sort_files(files, false);
 
 	closedir(dir);
-	return (files);
+	return (dir_t){ft_strdup(path, gc), files};
 }
 
-void	test_dir(t_list *fileArgs)
-{
-	while (fileArgs) {
-		DIR *	dir = opendir((char *)fileArgs->data);
-
-		struct dirent *	dirDT = readdir(dir);
-
-		ft_fprintf(1, "%s:\n", (char *)fileArgs->data);
-		while (dirDT) {
-			struct stat	buff = {0};
-			char	test[11] = {0};
-
-			stat(dirDT->d_name, &buff);
-			ft_fprintf(1, " %s ", dirDT->d_name);
-			decode_filemode(buff.st_mode, &test);
-			dirDT = readdir(dir);
-		}
-		ft_fprintf(1, "\n\n");
-		closedir(dir);
-		fileArgs = fileArgs->next;
-	}
-}

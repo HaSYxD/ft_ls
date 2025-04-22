@@ -10,7 +10,7 @@ CC = cc
 RM = rm -f
 FLAGS = -Wall -Werror -Wextra -g
 INCLUDES = -I./includes -I./$(DEPDIR)/libft
-LIBS = -L./$(DEPDIR)/libft -lft
+LIBS = -L./$(DEPDIR)/libft -lft -ltinfo
 
 #=====================================
 #===**DO NOT EDIT AFTER THIS LINE**===
