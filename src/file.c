@@ -6,7 +6,7 @@
 /*   By: hasyxd <aliaudet@student.42lehavre.fr      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 15:30:00 by hasyxd            #+#    #+#             */
-/*   Updated: 2025/04/22 16:07:48 by hasyxd           ###   ########.fr       */
+/*   Updated: 2025/04/23 15:55:14 by hasyxd           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,25 +44,25 @@ static char	get_filetype(mode_t mode)
 {
 	switch (mode & S_IFMT) {
 		case S_IFSOCK:
-			return ('s');
+			return (FT_SOCK);
 		case S_IFLNK:
-			return ('l');
+			return (FT_LINK);
 		case S_IFREG:
-			return ('-');
+			return (FT_FILE);
 		case S_IFBLK:
-			return ('b');
+			return (FT_BLK);
 		case S_IFDIR:
-			return ('d');
+			return (FT_DIR);
 		case S_IFCHR:
-			return ('c');
+			return (FT_CHR);
 		case S_IFIFO:
-			return ('p');
+			return (FT_FIFO);
 		default:
-			return ('?');
+			return (FT_NONE);
 	}
 }
 
-static void	decode_filemode(mode_t mode, char (*buff)[11])
+static filet_t	decode_filemode(mode_t mode, char (*buff)[11])
 {
 	uint8_t	ownerMode = (mode >> 0) & 0x07;
 	uint8_t	groupMode = (mode >> 3) & 0x07;
@@ -78,7 +78,10 @@ static void	decode_filemode(mode_t mode, char (*buff)[11])
 	for (int i = 0; i < 3; i++)
 		(*buff)[j++] = MODES[otherMode][i];
 	(*buff)[10] = '\0';
-	(*buff)[0] = get_filetype(mode);
+
+	filet_t	FT = get_filetype(mode);
+	(*buff)[0] = FILET_CHAR[FT];
+	return (FT);
 }
 
 static int	get_filecount(const char *path)
@@ -145,7 +148,7 @@ static file_t **	sortname_files(file_t **files)
 	return (files);
 }
 
-static file_t **	sort_files(file_t **files, const bool time)
+file_t **		sort_files(file_t **files, const bool time)
 {
 	if (time)
 		return (sorttime_files(files));
@@ -188,7 +191,7 @@ dir_t	getfiles_at(const char *path, t_garb *gc)
 		files[i]->_owner = get_fileusrname(buff.st_uid, gc);
 		files[i]->_group = get_filegrpname(buff.st_gid, gc);
 		files[i]->_timestamp = buff.st_mtime;
-		decode_filemode(buff.st_mode, &files[i]->_permissions);
+		files[i]->_fileT = decode_filemode(buff.st_mode, &files[i]->_permissions);
 		dirDT = readdir(dir);
 	}
 
