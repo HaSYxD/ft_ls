@@ -6,7 +6,7 @@
 /*   By: hasyxd <aliaudet@student.42lehavre.fr      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 13:10:19 by hasyxd            #+#    #+#             */
-/*   Updated: 2025/04/17 17:32:34 by hasyxd           ###   ########.fr       */
+/*   Updated: 2025/04/24 16:19:57 by hasyxd           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,7 @@ static int	handle_longFlag(const char *str)
 	return (-1);
 }
 
-static t_list *	handle_filesArgs(t_list *fileArg, const char *str, t_garb *gc)
+static t_list *	handle_filesArgs(t_list *fileArg, const char *str, arena_t *a)
 {
 	DIR *	dir = opendir(str);
 
@@ -49,12 +49,12 @@ static t_list *	handle_filesArgs(t_list *fileArg, const char *str, t_garb *gc)
 		return (NULL);
 	}
 
-	ft_lstadd_back(&fileArg, ft_lstnew(gc, (void *)str));
+	ft_lstadd_back(&fileArg, ft_lstnew(a, (void *)str));
 	closedir(dir);
 	return (fileArg);
 }
 
-t_list *	check_args(bool (*flags)[FLAG_COUNT], const char **args, const size_t count, t_garb *gc)
+t_list *	check_args(bool (*flags)[FLAG_COUNT], const char **args, const size_t count, arena_t *a)
 {
 	flagid_t	flagID = -2;
 	t_list *	fileArg = NULL;
@@ -64,7 +64,7 @@ t_list *	check_args(bool (*flags)[FLAG_COUNT], const char **args, const size_t c
 		size_t	dashCount = ft_strinstcount(args[i], '-');
 
 		if (args[i][0] != '-')
-			fileArg = handle_filesArgs(fileArg, args[i], gc);
+			fileArg = handle_filesArgs(fileArg, args[i], a);
 		
 		if (args[i][0] == '-' && dashCount == 1)
 			flagID = handle_shortFlag(flags, args[i] + 1);
@@ -78,6 +78,6 @@ t_list *	check_args(bool (*flags)[FLAG_COUNT], const char **args, const size_t c
 		(*flags)[flagID] = true;
 	}
 	if (!fileArg)
-		fileArg = ft_lstnew(gc, "./");
+		fileArg = ft_lstnew(a, "./");
 	return (fileArg);
 }

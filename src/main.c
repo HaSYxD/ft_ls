@@ -6,15 +6,13 @@
 /*   By: hasyxd <aliaudet@student.42lehavre.fr      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 11:11:55 by hasyxd            #+#    #+#             */
-/*   Updated: 2025/04/23 15:56:49 by hasyxd           ###   ########.fr       */
+/*   Updated: 2025/04/24 16:10:09 by hasyxd           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include <config.h>
 
-uint32_t	g_term_width = 0;
-
-int	get_termw(const char **env, env_t *data)
+static int	get_termw(const char **env, env_t *data)
 {
 	// Get the position of the TERM environement variable
 	int	i = 0;
@@ -36,7 +34,7 @@ int	get_termw(const char **env, env_t *data)
 	return (0);
 }
 
-static int	get_envcolor(const char **env, env_t *data, t_garb *gc)
+static int	get_envcolor(const char **env, env_t *data, arena_t *a)
 {
 	// Get the position of the LS_COLORS environement variable
 	int	i = 0;
@@ -61,8 +59,8 @@ static int	get_envcolor(const char **env, env_t *data, t_garb *gc)
 			if (ft_strncmp(w, LS_COLORSENT[i], 3) == 0) {
 				if (data->_colors[i])
 					break ;
-				data->_colors[i] = ft_strjoin("\e[", w + ft_strlenc(w, '=') + 1, gc);
-				data->_colors[i] = ft_strjoin(data->_colors[i], "m", gc);
+				data->_colors[i] = ft_strjoin("\e[", w + ft_strlenc(w, '=') + 1, a);
+				data->_colors[i] = ft_strjoin(data->_colors[i], "m", a);
 			}
 		}
 	}
@@ -70,7 +68,7 @@ static int	get_envcolor(const char **env, env_t *data, t_garb *gc)
 	// Set missing color values to the default color
 	for (int i = 0; i < LS_COLORSCOUNT; i++)
 		if (!data->_colors[i])
-			data->_colors[i] = ft_strdup("\e[0m", gc);
+			data->_colors[i] = ft_strdup("\e[0m", a);
 
 	return (0);
 }
@@ -78,22 +76,22 @@ static int	get_envcolor(const char **env, env_t *data, t_garb *gc)
 int	main(const int argc, const char **argv, const char **env)
 {
 	bool		flags[FLAG_COUNT] = {false};
-	t_garb		gc = init_gc();
+	arena_t *	arena = arena_init(ARENA_MEDIUM);
 	t_list *	fileArgs = NULL;
 	env_t		data = {0, {NULL}};
 
 	if (get_termw(env, &data) == -1)
 		return (1);
 
-	if (get_envcolor(env, &data, &gc) == -1)
+	if (get_envcolor(env, &data, arena) == -1)
 		return (1);
 
-	fileArgs = check_args(&flags, argv + 1, argc - 1, &gc);
+	fileArgs = check_args(&flags, argv + 1, argc - 1, arena);
 	if (!fileArgs)
 		return (-1);
 
 	while (fileArgs) {
-		dir_t	d = getfiles_at((char *)fileArgs->data, &gc);
+		dir_t	d = getfiles_at((char *)fileArgs->data, arena);
 
 		if (IS_NULL_DIR(d))
 			return (1);
@@ -103,6 +101,6 @@ int	main(const int argc, const char **argv, const char **env)
 		fileArgs = fileArgs->next;
 	}
 
-	clean_garbage(&gc);
+	arena_destroy(arena);
 	return (0);
 }

@@ -6,38 +6,38 @@
 /*   By: hasyxd <aliaudet@student.42lehavre.fr      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 15:30:00 by hasyxd            #+#    #+#             */
-/*   Updated: 2025/04/23 15:55:14 by hasyxd           ###   ########.fr       */
+/*   Updated: 2025/04/24 16:12:57 by hasyxd           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include <config.h>
 
-static char *	add_pathsuffix(const char *path, const char *suffix, t_garb *gc)
+static char *	add_pathsuffix(const char *path, const char *suffix, arena_t *a)
 {
 	char *	new = NULL;
 	int	i = ft_strlen(path);
 
 	if (path[i] != '/') {
-		new = ft_strjoin(path, "/", gc);
-		new = ft_strjoin(new, suffix, gc);
+		new = ft_strjoin(path, "/", a);
+		new = ft_strjoin(new, suffix, a);
 	}
 	else
-		new = ft_strjoin(path, suffix, gc);
+		new = ft_strjoin(path, suffix, a);
 	return (new);
 }
 
-static char *	get_fileusrname(const uid_t uid, t_garb *gc)
+static char *	get_fileusrname(const uid_t uid, arena_t *a)
 {
 	struct passwd *	pass = getpwuid(uid);
 
-	return (ft_strdup(pass->pw_name, gc));
+	return (ft_strdup(pass->pw_name, a));
 }
 
-static char *	get_filegrpname(const gid_t gid, t_garb *gc)
+static char *	get_filegrpname(const gid_t gid, arena_t *a)
 {
 	struct group *	grp = getgrgid(gid);
 
-	return (ft_strdup(grp->gr_name, gc));
+	return (ft_strdup(grp->gr_name, a));
 }
 
 static char	get_filetype(mode_t mode)
@@ -156,7 +156,7 @@ file_t **		sort_files(file_t **files, const bool time)
 		return (sortname_files(files));
 }
 
-dir_t	getfiles_at(const char *path, t_garb *gc)
+dir_t	getfiles_at(const char *path, arena_t *a)
 {
 	int	fCount = get_filecount(path);
 	if (fCount == -1)
@@ -168,16 +168,16 @@ dir_t	getfiles_at(const char *path, t_garb *gc)
 		return (ft_fprintf(2, "Error: \"%s\" no such file or directory\n", path), NULL_DIR);
 
 	// Allocate the file tree
-	file_t **	files = allocate(sizeof(file_t *) * (fCount + 1), gc);
+	file_t **	files = arena_allocate(sizeof(file_t *) * (fCount + 1), a);
 	for (int i = 0; i < fCount; i++)
-		files[i] = allocate(sizeof(file_t), gc);
+		files[i] = arena_allocate(sizeof(file_t), a);
 	files[fCount] = NULL;
 
 	// Get the files informations and store it in the file tree
 	struct dirent *	dirDT = readdir(dir);
 	for (int i = 0; i < fCount; i++) {
 		struct stat	buff;
-		char *		fullPath = add_pathsuffix(path, dirDT->d_name, gc);
+		char *		fullPath = add_pathsuffix(path, dirDT->d_name, a);
 
 		if (stat(fullPath, &buff) == -1)
 			return (ft_fprintf(2, "Error: \"%s\" could not get file infos\n", path), NULL_DIR);
@@ -185,11 +185,11 @@ dir_t	getfiles_at(const char *path, t_garb *gc)
 		files[i]->_UUID = buff.st_ino;
 		files[i]->_linksCount = buff.st_nlink;
 		files[i]->_size = buff.st_size;
-		files[i]->_dateTime = ft_substr(ctime(&buff.st_mtime), 4, 12, gc);
-		files[i]->_name = ft_strdup(dirDT->d_name, gc);
+		files[i]->_dateTime = ft_substr(ctime(&buff.st_mtime), 4, 12, a);
+		files[i]->_name = ft_strdup(dirDT->d_name, a);
 		files[i]->_next = NULL;
-		files[i]->_owner = get_fileusrname(buff.st_uid, gc);
-		files[i]->_group = get_filegrpname(buff.st_gid, gc);
+		files[i]->_owner = get_fileusrname(buff.st_uid, a);
+		files[i]->_group = get_filegrpname(buff.st_gid, a);
 		files[i]->_timestamp = buff.st_mtime;
 		files[i]->_fileT = decode_filemode(buff.st_mode, &files[i]->_permissions);
 		dirDT = readdir(dir);
@@ -199,6 +199,6 @@ dir_t	getfiles_at(const char *path, t_garb *gc)
 	files = sort_files(files, false);
 
 	closedir(dir);
-	return (dir_t){ft_strdup(path, gc), files};
+	return (dir_t){ft_strdup(path, a), files};
 }
 

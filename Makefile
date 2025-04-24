@@ -19,7 +19,7 @@ LIBS = -L./$(DEPDIR)/libft -lft -ltinfo
 all: directory clone  $(NAME)
 clone:
 	@if ! test -d $(DEPDIR)/libft; then\
-		git clone git@github.com:HaSYxD/libft.git $(DEPDIR)/libft;\
+		git clone -b \(Feature\)---A-complete-arena-allocator-aiming-to-replace-the-garbage-collector git@github.com:HaSYxD/libft.git $(DEPDIR)/libft;\
 	fi
 directory:
 	@if ! test -d $(DEPDIR); then\
