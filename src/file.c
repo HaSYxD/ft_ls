@@ -6,7 +6,7 @@
 /*   By: hasyxd <aliaudet@student.42lehavre.fr      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 15:30:00 by hasyxd            #+#    #+#             */
-/*   Updated: 2025/04/24 16:12:57 by hasyxd           ###   ########.fr       */
+/*   Updated: 2025/04/27 05:29:28 by hasyxd           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -104,25 +104,42 @@ static int	get_filecount(const char *path)
 
 static file_t **	sorttime_files(file_t **files)
 {
-	time_t		currSmallest = LONG_MAX;
-	uint32_t	currSmallestIdx = UINT_MAX;
+	time_t		currSmallest = LONG_MIN;
+	uint32_t	currSmallestIdx = 0;
 
 	for (int j = -1; files[j + 1]; j++) {
 		for (int i = j + 1; files[i]; i++) {
-			if (files[i]->_timestamp < currSmallest) {
+			if (files[i]->_timestamp > currSmallest) {
 				currSmallest = files[i]->_timestamp;
 				currSmallestIdx = i;
 			}
 		}
-
 		file_t *	tmp = files[j + 1];
 
 		files[j + 1] = files[currSmallestIdx];
 		files[currSmallestIdx] = tmp;
-		currSmallest = LONG_MAX;
-		currSmallestIdx = UINT_MAX;
+		currSmallest = LONG_MIN;
+		currSmallestIdx = 0;
 	}
 	return (files);
+}
+
+static char	get_sortchar(const char *str, const char *next)
+{
+	int	i = 0;
+	int	j = 0;
+
+	if (str[i] == '.')
+		i++;
+	if (!next)
+		return (ft_tolower(str[i]));
+	if (next[j] == '.')
+		j++;
+	while (next && str[i] == next[j] && i < 3 && j < 3) {
+		i++;
+		j++;
+	}
+	return (ft_tolower(str[i]));
 }
 
 static file_t **	sortname_files(file_t **files)
@@ -132,8 +149,12 @@ static file_t **	sortname_files(file_t **files)
 
 	for (int j = -1; files[j + 1]; j++) {
 		for (int i = j + 1; files[i]; i++) {
-			if (ft_tolower(files[i]->_name[0]) < currSmallest) {
-				currSmallest = files[i]->_name[0];
+			char *	next = NULL;
+			if (files[i + 1])
+				next = files[i + 1]->_name;
+			char	sortchar = get_sortchar(files[i]->_name, next);
+			if (sortchar < currSmallest) {
+				currSmallest = sortchar;
 				currSmallestIdx = i;
 			}
 		}

@@ -6,7 +6,7 @@
 /*   By: hasyxd <aliaudet@student.42lehavre.fr      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 11:11:55 by hasyxd            #+#    #+#             */
-/*   Updated: 2025/04/24 16:10:09 by hasyxd           ###   ########.fr       */
+/*   Updated: 2025/04/27 03:07:14 by hasyxd           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,16 +90,23 @@ int	main(const int argc, const char **argv, const char **env)
 	if (!fileArgs)
 		return (-1);
 
+	dir_t *	dirs = arena_allocate(sizeof(dir_t) * (ft_lstsize(fileArgs) + 1), arena);
+	size_t	i = 0;
+
 	while (fileArgs) {
 		dir_t	d = getfiles_at((char *)fileArgs->data, arena);
 
 		if (IS_NULL_DIR(d))
-			return (1);
-
-		for (int i = 0; d._files[i] != 0; i++)
-			ft_fprintf(1, "%s %d %s %s %d %s %s%s%s\n", d._files[i]->_permissions, d._files[i]->_linksCount, d._files[i]->_owner, d._files[i]->_group, d._files[i]->_size, d._files[i]->_dateTime, data._colors[d._files[i]->_fileT], d._files[i]->_name, "\e[0m");
+			break ;
+		dirs[i] = d;
+		//-for (int i = 0; d._files[i] != 0; i++)
+			//-ft_fprintf(1, "%s %d %s %s %d %s %s%s%s\n", d._files[i]->_permissions, d._files[i]->_linksCount, d._files[i]->_owner, d._files[i]->_group, d._files[i]->_size, d._files[i]->_dateTime, data._colors[d._files[i]->_fileT], d._files[i]->_name, "\e[0m");
 		fileArgs = fileArgs->next;
+		i++;
 	}
+	dirs[i] = NULL_DIR;
+
+	display(dirs, &flags, &data);
 
 	arena_destroy(arena);
 	return (0);
