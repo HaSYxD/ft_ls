@@ -6,7 +6,7 @@
 /*   By: hasyxd <aliaudet@student.42lehavre.fr      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 13:06:15 by hasyxd            #+#    #+#             */
-/*   Updated: 2025/04/27 02:56:39 by hasyxd           ###   ########.fr       */
+/*   Updated: 2025/04/28 15:39:08 by hasyxd           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,10 +34,10 @@
 # define MODES	(char*[]){"---", "--x", "-w-", "-wx", \
 				"r--", "r-x", "rw-", "rwx"}
 
-# define LS_COLORSCOUNT	7
-# define LS_COLORSENT	(char*[]){"di=", "fi=", "ln=", "pi=", "so=", "bd=", "cd="}
+# define LS_COLORSCOUNT	8
+# define LS_COLORSENT	(char*[]){"di=", "fi=", "ln=", "pi=", "so=", "bd=", "cd=", "ex="}
 
-# define FILET_CHAR	(char[]){'d', '-', 'l', 'p', 's', 'b', 'c', '?'}
+# define FILET_CHAR	(char[]){'d', '-', 'l', 'p', 's', 'b', 'c', '-', '?'}
 
 typedef int8_t	flagid_t;
 enum	flagid_e {
@@ -57,6 +57,7 @@ enum	filet_e {
 	FT_SOCK,
 	FT_BLK,
 	FT_CHR,
+	FT_EX,
 	FT_NONE
 };
 

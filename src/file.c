@@ -6,7 +6,7 @@
 /*   By: hasyxd <aliaudet@student.42lehavre.fr      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 15:30:00 by hasyxd            #+#    #+#             */
-/*   Updated: 2025/04/27 05:29:28 by hasyxd           ###   ########.fr       */
+/*   Updated: 2025/04/28 15:42:29 by hasyxd           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,6 +80,8 @@ static filet_t	decode_filemode(mode_t mode, char (*buff)[11])
 	(*buff)[10] = '\0';
 
 	filet_t	FT = get_filetype(mode);
+	if (FT == FT_FILE && ((*buff)[9] == 'x' || (*buff)[6] == 'x' || (*buff)[3] == 'x'))
+		FT = FT_EX;
 	(*buff)[0] = FILET_CHAR[FT];
 	return (FT);
 }
