@@ -6,41 +6,31 @@
 /*   By: hasyxd <aliaudet@student.42lehavre.fr      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/18 11:40:00 by hasyxd            #+#    #+#             */
-/*   Updated: 2025/04/28 15:04:52 by hasyxd           ###   ########.fr       */
+/*   Updated: 2025/04/28 19:09:05 by hasyxd           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include <config.h>
 
-static void	display_simple(dir_t *dirs, bool (*flags)[FLAG_COUNT], env_t *env)
+static void	display_simple(t_list *dirs, const size_t dcount, bool (*flags)[FLAG_COUNT], env_t *env)
 {
-	// Get the number of directory
-	size_t	dir_count = 0;
-	while (!IS_NULL_DIR(dirs[dir_count]))
-			dir_count++;
+	t_list *	start = dirs;
 
-	// Init the directory loop's iterator according to the flags
-	int	j = dir_count - 1;
-	int	dirinc = -1;
-	if ((*flags)[REVERSE]) {
-		dirinc = 1;
-		j = 0;
-	}
-	
+	while (dirs) {
 
-	while (!IS_NULL_DIR(dirs[j])) {
-		// Loop's end condition for reverse flag
-		if (j < 0)
-			break ;
+		dir_t *	dir = (dir_t *)dirs->data;
+		
+		if ((*flags)[TIME] == true)
+			sort_files(dir->_files, true);
 
 		// Get the number of count
 		size_t	file_count = 0;
-		while (dirs[j]._files[file_count])
+		while (dir->_files[file_count])
 			file_count++;
 
 		// Print to the correct format if there is more than one directory to print (usr param or Recursive flag)
-		if (dir_count > 1)
-			ft_fprintf(1, "%s:\n", dirs[j]._name);
+		if (dcount > 1)
+			ft_fprintf(1, "%s:\n", dir->_name);
 
 		// Init the file loop's iterator according to the flags
 		int	i = 0;
@@ -50,40 +40,40 @@ static void	display_simple(dir_t *dirs, bool (*flags)[FLAG_COUNT], env_t *env)
 			i = file_count - 1;
 		}
 
-		while (dirs[j]._files[i]) {
+		while (dir->_files[i]) {
 			// Loop's end condition for reverse flag
 			if (i < 0)
 				break ;
 
-			if (!(*flags)[ALL] && dirs[j]._files[i]->_name[0] == '.') {
+			if (!(*flags)[ALL] && dir->_files[i]->_name[0] == '.') {
 				i += inc;
 				continue ;
 			}
-			ft_fprintf(1, "%s%s%s  ", env->_colors[dirs[j]._files[i]->_fileT], dirs[j]._files[i]->_name, "\e[0m");
+			ft_fprintf(1, "%s%s%s  ", env->_colors[dir->_files[i]->_fileT], dir->_files[i]->_name, "\e[0m");
 			i += inc;
 		}
+		dirs = dirs->next;
+
 		// Print to the correct format if there is more than one directory to print (usr param or Recursive flag)
-		if (dir_count > 1 && ((dirinc == -1 && j != 0) || (dirinc == 1 && !IS_NULL_DIR(dirs[j + 1]))))
+		if (dcount > 1 && dirs)
 			ft_fprintf(1, "\n");
 		ft_fprintf(1, "\n");
-		j += dirinc;
 	}
+	dirs = start;
 }
 
-static void	display_long(dir_t *dirs, bool (*flags)[FLAG_COUNT], env_t *env)
+static void	display_long(t_list *dirs, const size_t dcount, bool (*flags)[FLAG_COUNT], env_t *env)
 {
+	(void)dcount;
 	(void)env;
 	(void)dirs;
 	(void)flags;
 }
 
-void	display(dir_t *dirs, bool (*flags)[FLAG_COUNT], env_t *env)
+void	display(t_list *dirs, const size_t dcount, bool (*flags)[FLAG_COUNT], env_t *env)
 {
-	if ((*flags)[TIME] == true)
-		sort_files(dirs[0]._files, true);
-
 	if ((*flags)[LONG] == true)
-		display_long(dirs, flags, env);
+		display_long(dirs, dcount, flags, env);
 	else
-		display_simple(dirs, flags, env);
+		display_simple(dirs, dcount, flags, env);
 }

@@ -6,7 +6,7 @@
 /*   By: hasyxd <aliaudet@student.42lehavre.fr      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 15:30:00 by hasyxd            #+#    #+#             */
-/*   Updated: 2025/04/28 15:42:29 by hasyxd           ###   ########.fr       */
+/*   Updated: 2025/04/28 19:06:55 by hasyxd           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -126,21 +126,12 @@ static file_t **	sorttime_files(file_t **files)
 	return (files);
 }
 
-static char	get_sortchar(const char *str, const char *next)
+static char	get_sortchar(const char *str)
 {
 	int	i = 0;
-	int	j = 0;
 
 	if (str[i] == '.')
 		i++;
-	if (!next)
-		return (ft_tolower(str[i]));
-	if (next[j] == '.')
-		j++;
-	while (next && str[i] == next[j] && i < 3 && j < 3) {
-		i++;
-		j++;
-	}
 	return (ft_tolower(str[i]));
 }
 
@@ -151,10 +142,7 @@ static file_t **	sortname_files(file_t **files)
 
 	for (int j = -1; files[j + 1]; j++) {
 		for (int i = j + 1; files[i]; i++) {
-			char *	next = NULL;
-			if (files[i + 1])
-				next = files[i + 1]->_name;
-			char	sortchar = get_sortchar(files[i]->_name, next);
+			char	sortchar = get_sortchar(files[i]->_name);
 			if (sortchar < currSmallest) {
 				currSmallest = sortchar;
 				currSmallestIdx = i;
@@ -179,7 +167,7 @@ file_t **		sort_files(file_t **files, const bool time)
 		return (sortname_files(files));
 }
 
-dir_t	getfiles_at(const char *path, arena_t *a)
+dir_t	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], t_list *fileArgs, arena_t *a)
 {
 	int	fCount = get_filecount(path);
 	if (fCount == -1)
@@ -192,6 +180,8 @@ dir_t	getfiles_at(const char *path, arena_t *a)
 
 	// Allocate the file tree
 	file_t **	files = arena_allocate(sizeof(file_t *) * (fCount + 1), a);
+	if (!files)
+		return (ft_fprintf(2, "%s\n", arena_geterrlog(g_arena_err)), NULL_DIR);
 	for (int i = 0; i < fCount; i++)
 		files[i] = arena_allocate(sizeof(file_t), a);
 	files[fCount] = NULL;
@@ -203,7 +193,7 @@ dir_t	getfiles_at(const char *path, arena_t *a)
 		char *		fullPath = add_pathsuffix(path, dirDT->d_name, a);
 
 		if (stat(fullPath, &buff) == -1)
-			return (ft_fprintf(2, "Error: \"%s\" could not get file infos\n", path), NULL_DIR);
+			return (ft_fprintf(2, "Error: \"%s\" could not get file infos\n(errno):%s\n", fullPath, strerror(errno)), NULL_DIR);
 		
 		files[i]->_UUID = buff.st_ino;
 		files[i]->_linksCount = buff.st_nlink;
@@ -215,6 +205,20 @@ dir_t	getfiles_at(const char *path, arena_t *a)
 		files[i]->_group = get_filegrpname(buff.st_gid, a);
 		files[i]->_timestamp = buff.st_mtime;
 		files[i]->_fileT = decode_filemode(buff.st_mode, &files[i]->_permissions);
+		
+		if ((*flags)[RECURSIVE] && files[i]->_fileT == FT_DIR) {
+			if (!(*flags)[ALL] && files[i]->_name[0] == '.') {
+				dirDT = readdir(dir);
+				continue ;
+			}
+			if (ft_strncmp(files[i]->_name, ".", 2) == 0 || ft_strnstr(files[i]->_name, "..", ft_strlen(files[i]->_name)) != NULL) {
+				dirDT = readdir(dir);
+				continue ;
+			}
+			ft_lstadd_back(&fileArgs, ft_lstnew(a, (void *)fullPath));
+		}
+
+		// read the file stream
 		dirDT = readdir(dir);
 	}
 

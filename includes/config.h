@@ -6,7 +6,7 @@
 /*   By: hasyxd <aliaudet@student.42lehavre.fr      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 13:06:15 by hasyxd            #+#    #+#             */
-/*   Updated: 2025/04/28 15:39:08 by hasyxd           ###   ########.fr       */
+/*   Updated: 2025/04/28 18:30:07 by hasyxd           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,8 @@
 # include <unistd.h>
 # include <stdint.h>
 # include <dirent.h>
+# include <errno.h>
+# include <string.h>
 # include <sys/stat.h>
 # include <term.h>
 # include <time.h>
@@ -89,8 +91,8 @@ typedef struct env_s {
 # define IS_NULL_DIR(d)	(d._name == NULL && d._files == NULL)
 
 t_list *	check_args(bool (*flags)[FLAG_COUNT], const char **args, const size_t count, arena_t *a);
-dir_t		getfiles_at(const char *path, arena_t *a);
+dir_t		getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], t_list *fileArgs, arena_t *a);
 file_t **	sort_files(file_t **files, const bool time);
-void		display(dir_t *dirs, bool (*flags)[FLAG_COUNT], env_t *env);
+void		display(t_list *dirs, const size_t dcount, bool (*flags)[FLAG_COUNT], env_t *env);
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: hasyxd <aliaudet@student.42lehavre.fr      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 11:11:55 by hasyxd            #+#    #+#             */
-/*   Updated: 2025/04/27 03:07:14 by hasyxd           ###   ########.fr       */
+/*   Updated: 2025/04/28 18:44:06 by hasyxd           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,10 +73,20 @@ static int	get_envcolor(const char **env, env_t *data, arena_t *a)
 	return (0);
 }
 
+static t_list *	add_dir(t_list *dirs, dir_t d, arena_t *a)
+{
+	dir_t *	dptr = arena_allocate(sizeof(dir_t), a);
+
+	dptr->_name = d._name;
+	dptr->_files = d._files;
+	ft_lstadd_back(&dirs, ft_lstnew(a, (void *)dptr));
+	return (dirs);
+}
+
 int	main(const int argc, const char **argv, const char **env)
 {
 	bool		flags[FLAG_COUNT] = {false};
-	arena_t *	arena = arena_init(ARENA_MEDIUM);
+	arena_t *	arena = arena_init(ARENA_LARGE);
 	t_list *	fileArgs = NULL;
 	env_t		data = {0, {NULL}};
 
@@ -90,23 +100,23 @@ int	main(const int argc, const char **argv, const char **env)
 	if (!fileArgs)
 		return (-1);
 
-	dir_t *	dirs = arena_allocate(sizeof(dir_t) * (ft_lstsize(fileArgs) + 1), arena);
+	//-dir_t *	dirs = arena_allocate(sizeof(dir_t) * (ft_lstsize(fileArgs) + 1), arena);
+	t_list *	dirs = NULL;
 	size_t	i = 0;
 
 	while (fileArgs) {
-		dir_t	d = getfiles_at((char *)fileArgs->data, arena);
+		dir_t	d = getfiles_at((char *)fileArgs->data, &flags, fileArgs, arena);
 
 		if (IS_NULL_DIR(d))
 			break ;
-		dirs[i] = d;
+		dirs = add_dir(dirs, d, arena);
+
 		//-for (int i = 0; d._files[i] != 0; i++)
 			//-ft_fprintf(1, "%s %d %s %s %d %s %s%s%s\n", d._files[i]->_permissions, d._files[i]->_linksCount, d._files[i]->_owner, d._files[i]->_group, d._files[i]->_size, d._files[i]->_dateTime, data._colors[d._files[i]->_fileT], d._files[i]->_name, "\e[0m");
 		fileArgs = fileArgs->next;
 		i++;
 	}
-	dirs[i] = NULL_DIR;
-
-	display(dirs, &flags, &data);
+	display(dirs, i, &flags, &data);
 
 	arena_destroy(arena);
 	return (0);
