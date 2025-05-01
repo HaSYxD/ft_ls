@@ -4,8 +4,7 @@ DEPDIR = dependancies
 SRC = src/main.c src/usrInHandling.c src/file.c src/display.c
 SRCEXT = .c
 OBJEXT = .o
-OBJ = $(addprefix $(OBJDIR)/,$(SRC:$(SRCEXT)=$(OBJEXT)))
-OBJOUT = $(addprefix $(OBJDIR)/,$(notdir $(OBJ)))
+OBJ = $(SRC:$(SRCEXT)=$(OBJEXT))
 CC = cc
 RM = rm -f
 FLAGS = -Wall -Werror -Wextra -g
@@ -16,35 +15,25 @@ LIBS = -L./$(DEPDIR)/libft -lft -ltinfo
 #===**DO NOT EDIT AFTER THIS LINE**===
 #=====================================
 
-all: directory clone  $(NAME)
+all: clone  $(NAME)
+
 clone:
 	@if ! test -d $(DEPDIR)/libft; then\
 		git clone -b \(Feature\)---A-complete-arena-allocator-aiming-to-replace-the-garbage-collector git@github.com:HaSYxD/libft.git $(DEPDIR)/libft;\
 	fi
-directory:
-	@if ! test -d $(DEPDIR); then\
-		mkdir $(DEPDIR);\
-	fi
-	@if ! test -d $(OBJDIR); then\
-		mkdir $(OBJDIR);\
-	fi
 
 $(NAME): $(OBJ)
 	cd $(DEPDIR)/libft;make
-	$(CC) $(OBJOUT) $(FLAGS) $(LIBS) -o $(NAME)
+	$(CC) $(OBJ) $(FLAGS) $(LIBS) -o $(NAME)
 
-$(OBJDIR)/%$(OBJEXT): %$(SRCEXT)
-	$(CC) $(INCLUDES) $(FLAGS) -c $< -o $(addprefix $(OBJDIR)/,$(notdir $@))
+%$(OBJEXT): %$(SRCEXT)
+	$(CC) $(INCLUDES) $(FLAGS) -c $< -o $@
 
 clean:
-	$(RM) $(OBJOUT)
+	$(RM) $(OBJ)
 
 fclean: clean
-	cd $(DEPDIR)/libft;make fclean
 	$(RM) $(NAME)
-	@if test -d $(OBJDIR); then\
-		rm -r $(OBJDIR);\
-	fi
 
 wipe: fclean
 	@if test -d $(DEPDIR)/libft; then\
