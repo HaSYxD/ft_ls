@@ -6,7 +6,7 @@
 /*   By: hasyxd <aliaudet@student.42lehavre.fr      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 15:30:00 by hasyxd            #+#    #+#             */
-/*   Updated: 2025/04/28 19:06:55 by hasyxd           ###   ########.fr       */
+/*   Updated: 2025/05/02 16:22:56 by hasyxd           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -167,42 +167,50 @@ file_t **		sort_files(file_t **files, const bool time)
 		return (sortname_files(files));
 }
 
-dir_t	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], t_list *fileArgs, arena_t *a)
+t_list *	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], env_t *env, t_list **fileArgs, arena_t *scratch_arena)
 {
 	int	fCount = get_filecount(path);
 	if (fCount == -1)
-		return (NULL_DIR);
+		return (NULL);
 
 	// Open the directory to get the file datas
 	DIR *		dir = opendir(path);
 	if (!dir)
-		return (ft_fprintf(2, "Error: \"%s\" no such file or directory\n", path), NULL_DIR);
+		return (ft_fprintf(2, "Error: \"%s\" no such file or directory\n", path), NULL);
+
+	t_list *	recurs_dirs = NULL;
+	arena_t *	file_arena = arena_init(ARENA_MEDIUM);
 
 	// Allocate the file tree
-	file_t **	files = arena_allocate(sizeof(file_t *) * (fCount + 1), a);
+	file_t **	files = arena_allocate(sizeof(file_t *) * (fCount + 1), file_arena);
 	if (!files)
-		return (ft_fprintf(2, "%s\n", arena_geterrlog(g_arena_err)), NULL_DIR);
-	for (int i = 0; i < fCount; i++)
-		files[i] = arena_allocate(sizeof(file_t), a);
+		return (ft_fprintf(2, "Error while allocating files: %s\n", arena_geterrlog(g_arena_err)), NULL);
+	for (int i = 0; i < fCount; i++) {
+		files[i] = arena_allocate(sizeof(file_t), file_arena);
+		if (!files[i])
+			return (ft_fprintf(2, "Error while allocating file: %s\n", arena_geterrlog(g_arena_err)), NULL);
+	}
 	files[fCount] = NULL;
 
 	// Get the files informations and store it in the file tree
 	struct dirent *	dirDT = readdir(dir);
 	for (int i = 0; i < fCount; i++) {
 		struct stat	buff;
-		char *		fullPath = add_pathsuffix(path, dirDT->d_name, a);
+		char *		fullPath = add_pathsuffix(path, dirDT->d_name, file_arena);
+		if (!fullPath)
+			return (ft_fprintf(2, "Error while processing fullpath: %s\n", arena_geterrlog(g_arena_err)), NULL);
 
-		if (stat(fullPath, &buff) == -1)
-			return (ft_fprintf(2, "Error: \"%s\" could not get file infos\n(errno):%s\n", fullPath, strerror(errno)), NULL_DIR);
+		if (lstat(fullPath, &buff) == -1)
+			return (ft_fprintf(2, "Error: \"%s\" could not get file infos\n(errno):%s\n", fullPath, strerror(errno)), NULL);
 		
 		files[i]->_UUID = buff.st_ino;
 		files[i]->_linksCount = buff.st_nlink;
 		files[i]->_size = buff.st_size;
-		files[i]->_dateTime = ft_substr(ctime(&buff.st_mtime), 4, 12, a);
-		files[i]->_name = ft_strdup(dirDT->d_name, a);
+		files[i]->_dateTime = ft_substr(ctime(&buff.st_mtime), 4, 12, file_arena);
+		files[i]->_name = ft_strdup(dirDT->d_name, file_arena);
 		files[i]->_next = NULL;
-		files[i]->_owner = get_fileusrname(buff.st_uid, a);
-		files[i]->_group = get_filegrpname(buff.st_gid, a);
+		files[i]->_owner = get_fileusrname(buff.st_uid, file_arena);
+		files[i]->_group = get_filegrpname(buff.st_gid, file_arena);
 		files[i]->_timestamp = buff.st_mtime;
 		files[i]->_fileT = decode_filemode(buff.st_mode, &files[i]->_permissions);
 		
@@ -215,7 +223,7 @@ dir_t	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], t_list *fileArgs,
 				dirDT = readdir(dir);
 				continue ;
 			}
-			ft_lstadd_back(&fileArgs, ft_lstnew(a, (void *)fullPath));
+			ft_lstadd_back(fileArgs, ft_lstnew(scratch_arena, (void *)ft_strdup(fullPath, scratch_arena)));
 		}
 
 		// read the file stream
@@ -223,9 +231,11 @@ dir_t	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], t_list *fileArgs,
 	}
 
 	// Sort the files (By default in alphabetical order)
-	files = sort_files(files, false);
+	files = sort_files(files, (*flags)[TIME]);
+	display((dir_t){ft_strdup(path, file_arena), files}, flags, env);
 
+	arena_destroy(file_arena);
 	closedir(dir);
-	return (dir_t){ft_strdup(path, a), files};
+	return (recurs_dirs);
 }
 

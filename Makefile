@@ -15,7 +15,7 @@ LIBS = -L./$(DEPDIR)/libft -lft -ltinfo
 #===**DO NOT EDIT AFTER THIS LINE**===
 #=====================================
 
-all: clone  $(NAME)
+all: clone $(NAME)
 
 clone:
 	@if ! test -d $(DEPDIR)/libft; then\
@@ -23,7 +23,7 @@ clone:
 	fi
 
 $(NAME): $(OBJ)
-	cd $(DEPDIR)/libft;make
+	@cd $(DEPDIR)/libft;make
 	$(CC) $(OBJ) $(FLAGS) $(LIBS) -o $(NAME)
 
 %$(OBJEXT): %$(SRCEXT)

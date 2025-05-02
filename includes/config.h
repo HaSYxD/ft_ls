@@ -6,7 +6,7 @@
 /*   By: hasyxd <aliaudet@student.42lehavre.fr      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/16 13:06:15 by hasyxd            #+#    #+#             */
-/*   Updated: 2025/04/28 18:30:07 by hasyxd           ###   ########.fr       */
+/*   Updated: 2025/05/02 16:34:49 by hasyxd           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,14 +85,15 @@ typedef struct dir_s {
 typedef struct env_s {
 	uint32_t	_term_width;
 	char *		_colors[LS_COLORSCOUNT];
+	bool		_multi_entry_format;
 }	env_t;
 
 # define NULL_DIR	(dir_t){NULL, NULL}
 # define IS_NULL_DIR(d)	(d._name == NULL && d._files == NULL)
 
 t_list *	check_args(bool (*flags)[FLAG_COUNT], const char **args, const size_t count, arena_t *a);
-dir_t		getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], t_list *fileArgs, arena_t *a);
+t_list *	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], env_t *env, t_list **fileArgs, arena_t *arg_arena);
 file_t **	sort_files(file_t **files, const bool time);
-void		display(t_list *dirs, const size_t dcount, bool (*flags)[FLAG_COUNT], env_t *env);
+void		display(dir_t dirs, bool (*flags)[FLAG_COUNT], env_t *env);
 
 #endif
