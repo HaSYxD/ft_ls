@@ -12,7 +12,7 @@
 
 # include <config.h>
 
-static int	get_termw(const char **env, env_t *data)
+int	get_termw(const char **env, env_t *data)
 {
 	// Get the position of the TERM environement variable
 	int	i = 0;
@@ -24,7 +24,7 @@ static int	get_termw(const char **env, env_t *data)
 	}
 
 	// Load terminfo database
-	char	term_buff[1024] = {0};
+	char	term_buff[4096] = {0};
 	int	status = tgetent(term_buff, env[i] + 5);
 	if (status == -1)
 		return (-1);
@@ -59,8 +59,8 @@ static int	get_envcolor(const char **env, env_t *data, arena_t *a)
 			if (ft_strncmp(w, LS_COLORSENT[i], 3) == 0) {
 				if (data->_colors[i])
 					break ;
-				data->_colors[i] = ft_strjoin("\e[", w + ft_strlenc(w, '=') + 1, a);
-				data->_colors[i] = ft_strjoin(data->_colors[i], "m", a);
+				data->_colors[i] = ft_strjoin("\e[", w + ft_strlenc(w, '=') + 1, (alloc_ctx_t){a, ARENA});
+				data->_colors[i] = ft_strjoin(data->_colors[i], "m", (alloc_ctx_t){a, ARENA});
 			}
 		}
 	}
@@ -68,7 +68,7 @@ static int	get_envcolor(const char **env, env_t *data, arena_t *a)
 	// Set missing color values to the default color
 	for (int i = 0; i < LS_COLORSCOUNT; i++)
 		if (!data->_colors[i])
-			data->_colors[i] = ft_strdup("\e[0m", a);
+			data->_colors[i] = ft_strdup("\e[0m", (alloc_ctx_t){a, ARENA});
 
 	return (0);
 }
@@ -86,52 +86,35 @@ static int	get_envcolor(const char **env, env_t *data, arena_t *a)
 int	main(const int argc, const char **argv, const char **env)
 {
 	arena_t *	env_arena = arena_init(ARENA_SMALL);
-	arena_t *	arena = arena_init(ARENA_HUGE);
-	arena_t *	scratch_arena = arena_init(ARENA_HUGE);
-
+	t_garb		gc = (t_garb){NULL, 0};
 	env_t		data = {0, {NULL}, false};
-	if (get_termw(env, &data) == -1)
-		return (1);
+
+	// if (get_termw(env, &data) == -1)
+	// 	return (1);
 	if (get_envcolor(env, &data, env_arena) == -1)
 		return (1);
 
 	bool		flags[FLAG_COUNT] = {false};
-	t_list *	fileArgs = check_args(&flags, argv + 1, argc - 1, arena);
-	t_list *	scratch_fileArgs = NULL;
+	t_list *	fileArgs = check_args(&flags, argv + 1, argc - 1, &gc);
 	if (!fileArgs)
 		return (-1);
 
 	if (ft_lstsize(fileArgs) > 1 || flags[RECURSIVE])
 		data._multi_entry_format = true;
 
-	//-dir_t *	dirs = arena_allocate(sizeof(dir_t) * (ft_lstsize(fileArgs) + 1), arena);
-	//-t_list *	dirs = NULL;
-	//-size_t	i = 0;
-
 	while (fileArgs) {
-		getfiles_at((char *)fileArgs->data, &flags, &data, &scratch_fileArgs, scratch_arena);
-	
-		//-ft_fprintf(1, "new arg: %s\n", (char *)scratch_fileArgs->data);
-		fileArgs = fileArgs->next;
-		if (!fileArgs) {
-			if (!scratch_fileArgs) {
-				//-ft_fprintf(1, "exiting\n");
-				break;
-			}
-			//-ft_fprintf(1, "================switching=====================\n");
-			arena_destroy(arena);
+		getfiles_at((char *)fileArgs->data, &flags, &data, &fileArgs, &gc);
 
-			arena = scratch_arena;
-			fileArgs = scratch_fileArgs;
-			scratch_arena = arena_init(ARENA_HUGE);
-			scratch_fileArgs = NULL;
-		}
+		t_list *	next = fileArgs->next;
+
+		deallocate(fileArgs, &gc);
+		fileArgs = next;
+	
 		//-for (int i = 0; d._files[i] != 0; i++)
 			//-ft_fprintf(1, "%s %d %s %s %d %s %s%s%s\n", d._files[i]->_permissions, d._files[i]->_linksCount, d._files[i]->_owner, d._files[i]->_group, d._files[i]->_size, d._files[i]->_dateTime, data._colors[d._files[i]->_fileT], d._files[i]->_name, "\e[0m");
 		//-i++;
 	}
-	arena_destroy(scratch_arena);
 	arena_destroy(env_arena);
-	arena_destroy(arena);
+	clean_garbage(&gc);
 	return (0);
 }

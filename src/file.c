@@ -18,11 +18,11 @@ static char *	add_pathsuffix(const char *path, const char *suffix, arena_t *a)
 	int	i = ft_strlen(path);
 
 	if (path[i] != '/') {
-		new = ft_strjoin(path, "/", a);
-		new = ft_strjoin(new, suffix, a);
+		new = ft_strjoin(path, "/", (alloc_ctx_t){a, ARENA});
+		new = ft_strjoin(new, suffix, (alloc_ctx_t){a, ARENA});
 	}
 	else
-		new = ft_strjoin(path, suffix, a);
+		new = ft_strjoin(path, suffix, (alloc_ctx_t){a, ARENA});
 	return (new);
 }
 
@@ -30,14 +30,14 @@ static char *	get_fileusrname(const uid_t uid, arena_t *a)
 {
 	struct passwd *	pass = getpwuid(uid);
 
-	return (ft_strdup(pass->pw_name, a));
+	return (ft_strdup(pass->pw_name, (alloc_ctx_t){a, ARENA}));
 }
 
 static char *	get_filegrpname(const gid_t gid, arena_t *a)
 {
 	struct group *	grp = getgrgid(gid);
 
-	return (ft_strdup(grp->gr_name, a));
+	return (ft_strdup(grp->gr_name, (alloc_ctx_t){a, ARENA}));
 }
 
 static char	get_filetype(mode_t mode)
@@ -167,7 +167,7 @@ file_t **		sort_files(file_t **files, const bool time)
 		return (sortname_files(files));
 }
 
-t_list *	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], env_t *env, t_list **fileArgs, arena_t *scratch_arena)
+t_list *	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], env_t *env, t_list **fileArgs, t_garb *gc)
 {
 	int	fCount = get_filecount(path);
 	if (fCount == -1)
@@ -183,12 +183,18 @@ t_list *	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], env_t *env, t_
 
 	// Allocate the file tree
 	file_t **	files = arena_allocate(sizeof(file_t *) * (fCount + 1), file_arena);
-	if (!files)
+	if (!files) {
+		arena_destroy(file_arena);
+		closedir(dir);
 		return (ft_fprintf(2, "Error while allocating files: %s\n", arena_geterrlog(g_arena_err)), NULL);
+	}
 	for (int i = 0; i < fCount; i++) {
 		files[i] = arena_allocate(sizeof(file_t), file_arena);
-		if (!files[i])
+		if (!files[i]) {
+			arena_destroy(file_arena);
+			closedir(dir);
 			return (ft_fprintf(2, "Error while allocating file: %s\n", arena_geterrlog(g_arena_err)), NULL);
+		}
 	}
 	files[fCount] = NULL;
 
@@ -197,17 +203,23 @@ t_list *	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], env_t *env, t_
 	for (int i = 0; i < fCount; i++) {
 		struct stat	buff;
 		char *		fullPath = add_pathsuffix(path, dirDT->d_name, file_arena);
-		if (!fullPath)
+		if (!fullPath) {
+			arena_destroy(file_arena);
+			closedir(dir);
 			return (ft_fprintf(2, "Error while processing fullpath: %s\n", arena_geterrlog(g_arena_err)), NULL);
+		}
 
-		if (lstat(fullPath, &buff) == -1)
+		if (lstat(fullPath, &buff) == -1) {
+			arena_destroy(file_arena);
+			closedir(dir);
 			return (ft_fprintf(2, "Error: \"%s\" could not get file infos\n(errno):%s\n", fullPath, strerror(errno)), NULL);
+		}
 		
 		files[i]->_UUID = buff.st_ino;
 		files[i]->_linksCount = buff.st_nlink;
 		files[i]->_size = buff.st_size;
-		files[i]->_dateTime = ft_substr(ctime(&buff.st_mtime), 4, 12, file_arena);
-		files[i]->_name = ft_strdup(dirDT->d_name, file_arena);
+		files[i]->_dateTime = ft_substr(ctime(&buff.st_mtime), 4, 12, (alloc_ctx_t){file_arena, ARENA});
+		files[i]->_name = ft_strdup(dirDT->d_name, (alloc_ctx_t){file_arena, ARENA});
 		files[i]->_next = NULL;
 		files[i]->_owner = get_fileusrname(buff.st_uid, file_arena);
 		files[i]->_group = get_filegrpname(buff.st_gid, file_arena);
@@ -223,7 +235,7 @@ t_list *	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], env_t *env, t_
 				dirDT = readdir(dir);
 				continue ;
 			}
-			ft_lstadd_back(fileArgs, ft_lstnew(scratch_arena, (void *)ft_strdup(fullPath, scratch_arena)));
+			ft_lstadd_back(fileArgs, ft_lstnew((alloc_ctx_t){gc, GARBAGE_COLLECTOR}, (void *)ft_strdup(fullPath, (alloc_ctx_t){gc, GARBAGE_COLLECTOR})));
 		}
 
 		// read the file stream
@@ -232,7 +244,7 @@ t_list *	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], env_t *env, t_
 
 	// Sort the files (By default in alphabetical order)
 	files = sort_files(files, (*flags)[TIME]);
-	display((dir_t){ft_strdup(path, file_arena), files}, flags, env);
+	display((dir_t){ft_strdup(path, (alloc_ctx_t){file_arena, ARENA}), files}, flags, env);
 
 	arena_destroy(file_arena);
 	closedir(dir);

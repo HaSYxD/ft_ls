@@ -26,6 +26,7 @@
 # include <limits.h>
 
 # include <libft.h>
+# include <libgc.h>
 
 // Flag defines
 # define FLAG_COUNT	5
@@ -91,8 +92,8 @@ typedef struct env_s {
 # define NULL_DIR	(dir_t){NULL, NULL}
 # define IS_NULL_DIR(d)	(d._name == NULL && d._files == NULL)
 
-t_list *	check_args(bool (*flags)[FLAG_COUNT], const char **args, const size_t count, arena_t *a);
-t_list *	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], env_t *env, t_list **fileArgs, arena_t *arg_arena);
+t_list *	check_args(bool (*flags)[FLAG_COUNT], const char **args, const size_t count, t_garb *gc);
+t_list *	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], env_t *env, t_list **fileArgs, t_garb *gc);
 file_t **	sort_files(file_t **files, const bool time);
 void		display(dir_t dirs, bool (*flags)[FLAG_COUNT], env_t *env);
 

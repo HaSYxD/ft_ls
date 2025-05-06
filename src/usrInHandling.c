@@ -40,7 +40,7 @@ static int	handle_longFlag(const char *str)
 	return (-1);
 }
 
-static t_list *	handle_filesArgs(t_list *fileArg, const char *str, arena_t *a)
+static t_list *	handle_filesArgs(t_list *fileArg, const char *str, t_garb *gc)
 {
 	DIR *	dir = opendir(str);
 
@@ -49,12 +49,12 @@ static t_list *	handle_filesArgs(t_list *fileArg, const char *str, arena_t *a)
 		return (NULL);
 	}
 
-	ft_lstadd_back(&fileArg, ft_lstnew(a, (void *)str));
+	ft_lstadd_back(&fileArg, ft_lstnew((alloc_ctx_t){gc, GARBAGE_COLLECTOR}, (void *)str));
 	closedir(dir);
 	return (fileArg);
 }
 
-t_list *	check_args(bool (*flags)[FLAG_COUNT], const char **args, const size_t count, arena_t *a)
+t_list *	check_args(bool (*flags)[FLAG_COUNT], const char **args, const size_t count, t_garb *gc)
 {
 	flagid_t	flagID = -2;
 	t_list *	fileArg = NULL;
@@ -64,7 +64,7 @@ t_list *	check_args(bool (*flags)[FLAG_COUNT], const char **args, const size_t c
 		size_t	dashCount = ft_strinstcount(args[i], '-');
 
 		if (args[i][0] != '-')
-			fileArg = handle_filesArgs(fileArg, args[i], a);
+			fileArg = handle_filesArgs(fileArg, args[i], gc);
 		
 		if (args[i][0] == '-' && dashCount == 1)
 			flagID = handle_shortFlag(flags, args[i] + 1);
@@ -78,6 +78,6 @@ t_list *	check_args(bool (*flags)[FLAG_COUNT], const char **args, const size_t c
 		(*flags)[flagID] = true;
 	}
 	if (!fileArg)
-		fileArg = ft_lstnew(a, ".");
+		fileArg = ft_lstnew((alloc_ctx_t){gc, GARBAGE_COLLECTOR}, ".");
 	return (fileArg);
 }
