@@ -200,6 +200,7 @@ t_list *	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], env_t *env, t_
 
 	// Get the files informations and store it in the file tree
 	struct dirent *	dirDT = readdir(dir);
+	size_t		ttlblks = 0;
 	for (int i = 0; i < fCount; i++) {
 		struct stat	buff;
 		char *		fullPath = add_pathsuffix(path, dirDT->d_name, file_arena);
@@ -225,7 +226,9 @@ t_list *	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], env_t *env, t_
 		files[i]->_group = get_filegrpname(buff.st_gid, file_arena);
 		files[i]->_timestamp = buff.st_mtime;
 		files[i]->_fileT = decode_filemode(buff.st_mode, &files[i]->_permissions);
-		
+	
+		if (files[i]->_name[0] != '.' || (files[i]->_name[0] == '.' && (*flags)[ALL]))
+			ttlblks += buff.st_blocks / 2;
 		if ((*flags)[RECURSIVE] && files[i]->_fileT == FT_DIR) {
 			if (!(*flags)[ALL] && files[i]->_name[0] == '.') {
 				dirDT = readdir(dir);
@@ -244,7 +247,7 @@ t_list *	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], env_t *env, t_
 
 	// Sort the files (By default in alphabetical order)
 	files = sort_files(files, (*flags)[TIME]);
-	display((dir_t){ft_strdup(path, (alloc_ctx_t){file_arena, ARENA}), files}, flags, env);
+	display((dir_t){ft_strdup(path, (alloc_ctx_t){file_arena, ARENA}), files, ttlblks}, flags, env);
 
 	arena_destroy(file_arena);
 	closedir(dir);

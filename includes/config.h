@@ -19,7 +19,6 @@
 # include <errno.h>
 # include <string.h>
 # include <sys/stat.h>
-# include <term.h>
 # include <time.h>
 # include <pwd.h>
 # include <grp.h>
@@ -81,6 +80,7 @@ typedef struct file_s {
 typedef struct dir_s {
 	char *		_name;
 	file_t **	_files;
+	size_t		_ttlblks;
 }	dir_t;
 
 typedef struct env_s {
@@ -89,8 +89,8 @@ typedef struct env_s {
 	bool		_multi_entry_format;
 }	env_t;
 
-# define NULL_DIR	(dir_t){NULL, NULL}
-# define IS_NULL_DIR(d)	(d._name == NULL && d._files == NULL)
+# define NULL_DIR	(dir_t){NULL, NULL, 0}
+# define IS_NULL_DIR(d)	(d._name == NULL && d._files == NULL && d._ttlblks == 0)
 
 t_list *	check_args(bool (*flags)[FLAG_COUNT], const char **args, const size_t count, t_garb *gc);
 t_list *	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], env_t *env, t_list **fileArgs, t_garb *gc);

@@ -12,28 +12,6 @@
 
 # include <config.h>
 
-int	get_termw(const char **env, env_t *data)
-{
-	// Get the position of the TERM environement variable
-	int	i = 0;
-	while (ft_strncmp(env[i], "TERM=", 5) != 0)
-		i++;
-	if (!env[i]) {
-		ft_fprintf(2, "Error: \"TERM\" environement variable was not found\n");
-		return (-1);
-	}
-
-	// Load terminfo database
-	char	term_buff[4096] = {0};
-	int	status = tgetent(term_buff, env[i] + 5);
-	if (status == -1)
-		return (-1);
-
-	// recover the number of column
-	data->_term_width = tgetnum("co");
-	return (0);
-}
-
 static int	get_envcolor(const char **env, env_t *data, arena_t *a)
 {
 	// Get the position of the LS_COLORS environement variable
@@ -73,24 +51,12 @@ static int	get_envcolor(const char **env, env_t *data, arena_t *a)
 	return (0);
 }
 
-//-static t_list *	add_dir(t_list *dirs, dir_t d, arena_t *a)
-//-{
-	//-dir_t *	dptr = arena_allocate(sizeof(dir_t), a);
-//-
-	//-dptr->_name = d._name;
-	//-dptr->_files = d._files;
-	//-ft_lstadd_back(&dirs, ft_lstnew(a, (void *)dptr));
-	//-return (dirs);
-//-}
-
 int	main(const int argc, const char **argv, const char **env)
 {
 	arena_t *	env_arena = arena_init(ARENA_SMALL);
 	t_garb		gc = (t_garb){NULL, 0};
 	env_t		data = {0, {NULL}, false};
 
-	// if (get_termw(env, &data) == -1)
-	// 	return (1);
 	if (get_envcolor(env, &data, env_arena) == -1)
 		return (1);
 
@@ -109,10 +75,6 @@ int	main(const int argc, const char **argv, const char **env)
 
 		deallocate(fileArgs, &gc);
 		fileArgs = next;
-	
-		//-for (int i = 0; d._files[i] != 0; i++)
-			//-ft_fprintf(1, "%s %d %s %s %d %s %s%s%s\n", d._files[i]->_permissions, d._files[i]->_linksCount, d._files[i]->_owner, d._files[i]->_group, d._files[i]->_size, d._files[i]->_dateTime, data._colors[d._files[i]->_fileT], d._files[i]->_name, "\e[0m");
-		//-i++;
 	}
 	arena_destroy(env_arena);
 	clean_garbage(&gc);
