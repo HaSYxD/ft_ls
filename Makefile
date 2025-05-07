@@ -30,6 +30,7 @@ $(NAME): $(OBJ)
 	$(CC) $(INCLUDES) $(FLAGS) -c $< -o $@
 
 clean:
+	@cd $(DEPDIR)/libft;make clean
 	$(RM) $(OBJ)
 
 fclean: clean
