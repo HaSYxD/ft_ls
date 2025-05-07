@@ -86,6 +86,15 @@ static filet_t	decode_filemode(mode_t mode, char (*buff)[11])
 	return (FT);
 }
 
+static size_t	get_filelen(file_t **files)
+{
+	size_t	i = 0;
+
+	while (files[i])
+		i++;
+	return (i);
+}
+
 static int	get_filecount(const char *path)
 {
 	DIR *		dir = opendir(path);
@@ -126,35 +135,50 @@ static file_t **	sorttime_files(file_t **files)
 	return (files);
 }
 
-static char	get_sortchar(const char *str)
+static char	get_sortchar(const char *str, int offset)
 {
-	int	i = 0;
-
-	if (str[i] == '.')
-		i++;
-	return (ft_tolower(str[i]));
+	if (str[0] == '.')
+		offset++;
+	return (ft_tolower(str[offset]));
 }
 
-static file_t **	sortname_files(file_t **files)
+static file_t **	sortname_files(file_t **files, const size_t start, const size_t len, const int offset)
 {
 	unsigned char	currSmallest = 255;
 	uint32_t	currSmallestIdx = UINT_MAX;
 
-	for (int j = -1; files[j + 1]; j++) {
-		for (int i = j + 1; files[i]; i++) {
-			char	sortchar = get_sortchar(files[i]->_name);
+	for (size_t j = start; j < (start + len); j++) {
+		for (size_t i = j; i < (start + len); i++) {
+			char	sortchar = get_sortchar(files[i]->_name, offset);
 			if (sortchar < currSmallest) {
 				currSmallest = sortchar;
 				currSmallestIdx = i;
 			}
 		}
 
-		file_t *	tmp = files[j + 1];
+		file_t *	tmp = files[j];
 
-		files[j + 1] = files[currSmallestIdx];
+		files[j] = files[currSmallestIdx];
 		files[currSmallestIdx] = tmp;
 		currSmallest = 255;
 		currSmallestIdx = UINT_MAX;
+	}
+
+	unsigned char	last = 255;
+	size_t		identicales = 0;
+
+	for (size_t i = start; i < (start + len); i++) {
+		unsigned char	curr = get_sortchar(files[i]->_name, offset);
+
+		if (curr == last)
+			identicales++;
+		else if (i > start + 1 && curr != last && identicales > 0) {
+			files = sortname_files(files, i - identicales - 1, identicales + 1, offset + 1);
+			identicales = 0;
+		}
+		if (i == (start + len - 2) && identicales > 0)
+			files = sortname_files(files, i - identicales - 1, identicales + 1, offset + 1);
+		last = curr;
 	}
 	return (files);
 }
@@ -164,7 +188,7 @@ file_t **		sort_files(file_t **files, const bool time)
 	if (time)
 		return (sorttime_files(files));
 	else
-		return (sortname_files(files));
+		return (sortname_files(files, 0, get_filelen(files), 0));
 }
 
 t_list *	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], env_t *env, t_list **fileArgs, t_garb *gc)
@@ -179,7 +203,7 @@ t_list *	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], env_t *env, t_
 		return (ft_fprintf(2, "Error: \"%s\" no such file or directory\n", path), NULL);
 
 	t_list *	recurs_dirs = NULL;
-	arena_t *	file_arena = arena_init(ARENA_MEDIUM);
+	arena_t *	file_arena = arena_init(ARENA_HUGE);
 
 	// Allocate the file tree
 	file_t **	files = arena_allocate(sizeof(file_t *) * (fCount + 1), file_arena);
@@ -249,7 +273,8 @@ t_list *	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], env_t *env, t_
 	files = sort_files(files, (*flags)[TIME]);
 	display((dir_t){ft_strdup(path, (alloc_ctx_t){file_arena, ARENA}), files, ttlblks}, flags, env);
 
-	arena_destroy(file_arena);
+	if (arena_getblks_count(file_arena) >= 2)
+		arena_destroy(file_arena);
 	closedir(dir);
 	return (recurs_dirs);
 }
