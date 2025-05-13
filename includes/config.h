@@ -74,7 +74,7 @@ typedef struct file_s {
 	char *			_dateTime;
 	time_t			_timestamp;
 	char *			_name;
-	struct file_s **	_next;
+	char *			_linkTarget;
 }	file_t;
 
 typedef struct dir_s {

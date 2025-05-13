@@ -62,6 +62,18 @@ static char	get_filetype(mode_t mode)
 	}
 }
 
+static char *	get_linkTarget(char *fullPath, arena_t *file_arena)
+{
+	char	buff[1024] = {0};
+	int	len = 0;
+
+	len = readlink(fullPath, buff, 1024);
+	if(len == -1)
+		return (NULL);
+	buff[len] = 0;
+	return (ft_strdup(buff, (alloc_ctx_t){file_arena, ARENA}));
+}
+
 static filet_t	decode_filemode(mode_t mode, char (*buff)[11])
 {
 	uint8_t	ownerMode = (mode >> 0) & 0x07;
@@ -240,19 +252,23 @@ t_list *	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], env_t *env, t_
 			return (ft_fprintf(2, "Error: \"%s\" could not get file infos\n(errno):%s\n", fullPath, strerror(errno)), NULL);
 		}
 		
+		// recover all the informations of the file
 		files[i]->_UUID = buff.st_ino;
 		files[i]->_linksCount = buff.st_nlink;
 		files[i]->_size = buff.st_size;
 		files[i]->_dateTime = ft_substr(ctime(&buff.st_mtime), 4, 12, (alloc_ctx_t){file_arena, ARENA});
 		files[i]->_name = ft_strdup(dirDT->d_name, (alloc_ctx_t){file_arena, ARENA});
-		files[i]->_next = NULL;
 		files[i]->_owner = get_fileusrname(buff.st_uid, file_arena);
 		files[i]->_group = get_filegrpname(buff.st_gid, file_arena);
 		files[i]->_timestamp = buff.st_mtime;
 		files[i]->_fileT = decode_filemode(buff.st_mode, &files[i]->_permissions);
+		files[i]->_linkTarget = get_linkTarget(fullPath, file_arena);
 	
+		// increment the total size if necessary
 		if (files[i]->_name[0] != '.' || (files[i]->_name[0] == '.' && (*flags)[ALL]))
 			ttlblks += buff.st_blocks / 2;
+		
+		// recover nested directory in case of a recursive call
 		if ((*flags)[RECURSIVE] && files[i]->_fileT == FT_DIR) {
 			if (!(*flags)[ALL] && files[i]->_name[0] == '.') {
 				dirDT = readdir(dir);

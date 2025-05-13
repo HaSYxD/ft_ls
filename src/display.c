@@ -19,7 +19,10 @@ static void	display_simple(file_t *file, env_t *env)
 
 static void	display_long(file_t *file, env_t *env)
 {
-	ft_fprintf(1, "%s %d %s %s %d %s %s%s%s\n",file->_permissions, file->_linksCount, file->_owner, file->_group, file->_size, file->_dateTime, env->_colors[file->_fileT], file->_name, "\e[0m");
+	ft_fprintf(1, "%s %d %s %s %d %s %s%s%s",file->_permissions, file->_linksCount, file->_owner, file->_group, file->_size, file->_dateTime, env->_colors[file->_fileT], file->_name, "\e[0m");
+	if (file->_fileT == FT_LINK)
+		ft_fprintf(1, " -> %s", file->_linkTarget);
+	ft_fprintf(1, "\n");
 }
 
 void	display(dir_t dir, bool (*flags)[FLAG_COUNT], env_t *env)
