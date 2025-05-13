@@ -44,7 +44,11 @@ static t_list *	handle_filesArgs(t_list *fileArg, const char *str, t_garb *gc)
 {
 	DIR *	dir = opendir(str);
 
-	if (!dir) {
+	if (!dir && errno == EACCES) {
+		ft_fprintf(2, "Error: \"%s\" permission denied\n", str);
+		return (NULL);
+	}
+	if (!dir && errno == ENOTDIR) {
 		ft_fprintf(2, "Error: \"%s\" no such file or directory\n", str);
 		return (NULL);
 	}
@@ -58,13 +62,18 @@ t_list *	check_args(bool (*flags)[FLAG_COUNT], const char **args, const size_t c
 {
 	flagid_t	flagID = -2;
 	t_list *	fileArg = NULL;
+	bool		fileArgFailed = false;
 
 	for (size_t i = 0; i < count; i++) {
 
 		size_t	dashCount = ft_strinstcount(args[i], '-');
 
-		if (args[i][0] != '-')
+		if (args[i][0] != '-') {
 			fileArg = handle_filesArgs(fileArg, args[i], gc);
+			
+			if (!fileArg)
+				fileArgFailed = true;
+		}
 		
 		if (args[i][0] == '-' && dashCount == 1)
 			flagID = handle_shortFlag(flags, args[i] + 1);
@@ -77,7 +86,7 @@ t_list *	check_args(bool (*flags)[FLAG_COUNT], const char **args, const size_t c
 			return (NULL);
 		(*flags)[flagID] = true;
 	}
-	if (!fileArg)
+	if (!fileArgFailed && !fileArg)
 		fileArg = ft_lstnew((alloc_ctx_t){gc, GARBAGE_COLLECTOR}, ".");
 	return (fileArg);
 }

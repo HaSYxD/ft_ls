@@ -273,8 +273,7 @@ t_list *	getfiles_at(const char *path, bool (*flags)[FLAG_COUNT], env_t *env, t_
 	files = sort_files(files, (*flags)[TIME]);
 	display((dir_t){ft_strdup(path, (alloc_ctx_t){file_arena, ARENA}), files, ttlblks}, flags, env);
 
-	if (arena_getblks_count(file_arena) >= 2)
-		arena_destroy(file_arena);
+	arena_destroy(file_arena);
 	closedir(dir);
 	return (recurs_dirs);
 }
